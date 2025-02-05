@@ -1,0 +1,16 @@
+{
+  "name": "chat-application",
+  "version": "1.0.0",
+  "main": "server.js",
+"scripts": {
+  "start": "node server.js && open http://localhost:5000"
+
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "mongoose": "^5.10.9",
+    "socket.io": "^3.0.3",
+    "bcryptjs": "^2.4.3",
+    "jsonwebtoken": "^8.5.1"
+  }
+}

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+<body>
+    <h2>Chat Room</h2>
+    <select id="room-select">
+        <option value="devops">DevOps</option>
+        <option value="cloud computing">Cloud Computing</option>
+        <option value="covid19">Covid-19</option>
+        <option value="sports">Sports</option>
+        <option value="nodeJS">Node.js</option>
+    </select>
+    <button onclick="joinRoom()">Join Room</button>
+    <button onclick="leaveRoom()">Leave Room</button>
+
+    <div id="chat-box"></div>
+
+    <input type="text" id="message" placeholder="Type a message..." onkeypress="notifyTyping()">
+    <button onclick="sendMessage()">Send</button>
+    
+    <input type="text" id="private-message" placeholder="Type a private message...">
+    <input type="text" id="recipient" placeholder="Recipient's username">
+    <button onclick="sendPrivateMessage()">Send Private Message</button>
+
+    <p id="typing-indicator"></p>
+
+    <button onclick="logout()">Logout</button>
+
+    <script>
+        const socket = io();
+        let room = "";
+
+        function joinRoom() {
+            room = document.getElementById("room-select").value;
+            socket.emit("joinRoom", room);
+            document.getElementById("chat-box").innerHTML += `<p>Joined ${room} room</p>`;
+        }
+
+        function leaveRoom() {
+            socket.emit("leaveRoom", room);
+            document.getElementById("chat-box").innerHTML += `<p>Left ${room} room</p>`;
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            const username = localStorage.getItem("username");
+            socket.emit("sendMessage", { room, message, from_user: username });
+            document.getElementById("message").value = "";
+        }
+
+        function sendPrivateMessage() {
+            const message = document.getElementById("private-message").value;
+            const recipient = document.getElementById("recipient").value;
+            const username = localStorage.getItem("username");
+            socket.emit("sendPrivateMessage", { to_user: recipient, message, from_user: username });
+            document.getElementById("private-message").value = "";
+            document.getElementById("recipient").value = "";
+        }
+
+        socket.on("receiveMessage", (data) => {
+            document.getElementById("chat-box").innerHTML += `<p><strong>${data.from_user}:</strong> ${data.message}</p>`;
+        });
+
+        socket.on("receivePrivateMessage", (data) => {
+            document.getElementById("chat-box").innerHTML += `<p><strong>Private from ${data.from_user}:</strong> ${data.message}</p>`;
+        });
+
+        function notifyTyping() {
+            socket.emit("typing", { room, user: localStorage.getItem("username") });
+        }
+
+        socket.on("userTyping", (data) => {
+            document.getElementById("typing-indicator").innerText = `${data.user} is typing...`;
+            setTimeout(() => {
+                document.getElementById("typing-indicator").innerText = "";
+            }, 1000);
+        });
+
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("username");
+            window.location.href = "login.html";
+        }
+    </script>
+</body>
+</html>
